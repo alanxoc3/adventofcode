@@ -1,4 +1,4 @@
-pub fn day01p1(s: &String) -> String {
+pub fn p1(s: &String) -> String {
     let list = parse_to_num_list(s);
     let combos = comb(&list[..], 2);
 
@@ -11,7 +11,7 @@ pub fn day01p1(s: &String) -> String {
     return "".to_string();
 }
 
-pub fn day01p2(s: &String) -> String {
+pub fn p2(s: &String) -> String {
     let list = parse_to_num_list(s);
     let combos = comb(&list[..], 3);
 
