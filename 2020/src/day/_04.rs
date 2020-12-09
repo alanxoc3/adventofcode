@@ -118,7 +118,6 @@ fn parse_passports(s: &String) -> Vec<HashMap<&str, &str>> {
 
     if current_passport.len() > 0 {
         passports.push(current_passport);
-        current_passport = HashMap::new();
     }
 
     return passports
