@@ -1,8 +1,6 @@
-use std::cmp;
-
 pub fn p1(s: &String) -> String {
     let (earliest_time, v) = parse(s);
-    let v: Vec<i32> = v[..].iter().map(|x| *x).filter(|x| *x > 0).collect();
+    let v: Vec<i64> = v[..].iter().map(|x| *x).filter(|x| *x > 0).collect();
 
     let (mut min_id, mut min_val) = (-1, earliest_time);
     for x in v {
@@ -18,22 +16,54 @@ pub fn p1(s: &String) -> String {
 }
 
 pub fn p2(s: &String) -> String {
-    // (x + 0) % 07 = 0
-    // (x + 1) % 13 = 0
-    // (x + 4) % 59 = 0
-    // (x + 6) % 31 = 0
-    // (x + 7) % 19 = 0
-    return "".to_string();
+    let (_, v) = parse(s);
+    let v: Vec<(i64, i64)> = v.iter()
+        .enumerate()
+        .filter(|p| *p.1 > 0)
+        .map(|p| (*p.1, (p.1 - p.0 as i64) % p.1))
+        .map(|p| (p.0, (p.1 + p.0) % p.0))
+        .collect();
+
+    let modulii: Vec<_> = v.iter().map(|p| p.0).collect();
+    let residues: Vec<_> = v.iter().map(|p| p.1).collect();
+    return chinese_remainder(&residues, &modulii).unwrap().to_string();
 }
 
-fn get_partitions<'a>(v: &'a Vec<i32>) -> (Vec<(&'a i32, &'a i32)>, Vec<(&'a i32, &'a i32)>) {
-    let pairs: Vec<(&i32, &i32)> = v[..v.len()-1].iter().zip(v[1..v.len()].iter()).collect();
-    let (ones, threes): (Vec<(&i32, &i32)>, Vec<(&i32, &i32)>) = pairs.iter().partition(|&x| (*x).1 - (*x).0 == 1);
-    return (ones, threes);
+// Chinese Remainder Theorem Implementation.
+// Stolen from: https://rosettacode.org/wiki/Chinese_remainder_theorem
+fn egcd(a: i64, b: i64) -> (i64, i64, i64) {
+    if a == 0 {
+        (b, 0, 1)
+    } else {
+        let (g, x, y) = egcd(b % a, a);
+        (g, y - (b / a) * x, x)
+    }
 }
 
-fn parse(s: &String) -> (i32, Vec<i32>) {
-    let earliest_time: i32 = s.lines().nth(0).unwrap().parse::<i32>().unwrap();
-    let v = s.lines().nth(1).unwrap().split(",").map(|x| match x.parse::<i32>() { Ok(v) => { v }, Err(_) => { 0 }}).collect();
+fn mod_inv(x: i64, n: i64) -> Option<i64> {
+    let (g, x, _) = egcd(x, n);
+    if g == 1 {
+        Some((x % n + n) % n)
+    } else {
+        None
+    }
+}
+
+fn chinese_remainder(residues: &[i64], modulii: &[i64]) -> Option<i64> {
+    let prod = modulii.iter().product::<i64>();
+
+    let mut sum = 0;
+
+    for (&residue, &modulus) in residues.iter().zip(modulii) {
+        let p = prod / modulus;
+        sum += residue * mod_inv(p, modulus)? * p
+    }
+
+    Some(sum % prod)
+}
+
+fn parse(s: &String) -> (i64, Vec<i64>) {
+    let earliest_time: i64 = s.lines().nth(0).unwrap().parse::<i64>().unwrap();
+    let v = s.lines().nth(1).unwrap().split(",").map(|x| match x.parse::<i64>() { Ok(v) => { v }, Err(_) => { 0 }}).collect();
     return (earliest_time, v);
 }
